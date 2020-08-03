@@ -1,18 +1,18 @@
 ## Purpose
 
-Build a template repository to get to coding as quickly as possible, by starting from a common template which follows the guidelines [`here`](https://github.com/golang-standards/project-layout)
+Dump the same data you can get from
+https://github.com/orgs/WeConnect/insights/dependencies but export the results
+to a csv or google sheet
 
-## Features
-* Makefile to build consistently in a local environment and remote environment
-* Dockerfile for a generic image to build for 
-* Go Mod (which you should to your project path change)
-* VS Code environment
-* Generic docker push
 
-## TODO
-* Brew generic install [DONE]
-* GITHUB Actions build and push to dockerhub [DONE]
-* Production Builds with git tag
+## Algorithm
 
-## Installing via brew
-* `brew install --verbose --build-from-source brew/Formula/go-project-template.rb`
+* create authorized https client to the graphql endpoint
+* get all repos added to in the last 6 months which is not archived
+* if the repo contains the lang supported by the github dependencies get the
+  license dump
+* otherwise mark for manual intervention
+
+## OUTPUT
+ Service , github repo, lang, lib, license
+
