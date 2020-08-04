@@ -2,13 +2,14 @@ package graphgit
 
 import (
 	"context"
-	"fmt"
+
 	"log"
 	"os"
 	"strings"
 
 	"github.com/machinebox/graphql"
 	"github.com/pkg/errors"
+	logrus "github.com/sirupsen/logrus"
 )
 
 // use graphql to get data from github for the repository
@@ -27,6 +28,12 @@ func NewService() *Service {
 			log.Printf("check.NewService()  - %s\n", s)
 		}
 	}
+
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		PrettyPrint: true,
+	})
+	logrus.SetReportCaller(true)
+
 	return service
 }
 
@@ -82,12 +89,10 @@ func (service *Service) GetLicenses(owner, repo, after string) (*DependencyGraph
 			skipErrorNextTime(repo)
 			return nil, nil
 		}
-		fmt.Printf("GENERIC ERROR %s\n", err)
 		return nil, err
 	}
 
 	if respData.Repository.DependencyGraphManifests.PageInfo.HasNextPage {
-		log.Printf("WARNING: Pagination detected: %s\n", respData.Repository.DependencyGraphManifests.PageInfo)
 		data, err := service.GetLicenses(owner, repo, respData.Repository.DependencyGraphManifests.PageInfo.EndCursor)
 		if err != nil {
 			return nil, err
@@ -96,7 +101,6 @@ func (service *Service) GetLicenses(owner, repo, after string) (*DependencyGraph
 	}
 
 	depdendancySize := len(respData.Repository.DependencyGraphManifests.Edges)
-	fmt.Printf("REPOSIZE: %d\n", depdendancySize)
 	if depdendancySize == 0 { //hack
 		skipErrorNextTime(repo)
 	}
@@ -104,7 +108,7 @@ func (service *Service) GetLicenses(owner, repo, after string) (*DependencyGraph
 }
 
 func skipErrorNextTime(repo string) {
-	fmt.Printf("Skipping this repo due to some error: %s\n", repo)
+	logrus.Infof("Skipping this repo due to some error: %s\n", repo)
 	fd, _ := os.Create("./data/" + repo + ".csv")
 	defer fd.Close()
 }
@@ -121,7 +125,7 @@ func (service *Service) execute(req *graphql.Request, respData interface{}) erro
 
 		// catch timeout errors
 		if strings.Contains(err.Error(), "timedout") != false || strings.Contains(err.Error(), "loading") != false {
-			fmt.Printf("WARNING - recovering from a timeout: %s\n", err)
+			logrus.Infof("WARNING - recovering from a timeout: %s\n", err)
 			return service.execute(req, respData)
 		}
 
@@ -162,8 +166,8 @@ func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesR
 	if err := service.execute(req, &respData); err != nil {
 		return nil, err
 	}
+
 	if respData.Repos.PageInfo.HasNextPage == true {
-		fmt.Println("GetRepos() - WARNING PAGINATION")
 		data, err := service.GetRepos(org, respData.Repos.PageInfo.EndCursor)
 		if err != nil {
 			return nil, err

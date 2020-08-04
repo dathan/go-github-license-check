@@ -2,14 +2,15 @@ package repository
 
 import (
 	"encoding/csv"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/dathan/go-github-license-check/pkg/gitrepos"
 	"github.com/dathan/go-github-license-check/pkg/graphgit"
 	"github.com/dathan/go-github-license-check/pkg/license"
+	"github.com/google/martian/log"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 type GitHubRepository struct {
@@ -19,6 +20,10 @@ type GitHubRepository struct {
 func NewRepository() *GitHubRepository {
 	lic := &GitHubRepository{}
 	lic.gihub = graphgit.NewService()
+	logrus.SetFormatter(&logrus.JSONFormatter{
+		PrettyPrint: true,
+	})
+	logrus.SetReportCaller(true)
 
 	return lic
 }
@@ -28,7 +33,7 @@ func (ghr *GitHubRepository) GetLicenses(owner, repo string) (license.LicenseChe
 	filename := "./data/" + repo + ".csv"
 	// better semiphore is needed
 	if fileExists(filename) {
-		fmt.Printf("Warning Skipping get - %s exists..skipping\n", filename)
+		logrus.Infof("Warning Skipping get - %s exists..skipping\n", filename)
 		return nil, nil
 	}
 
@@ -38,7 +43,6 @@ func (ghr *GitHubRepository) GetLicenses(owner, repo string) (license.LicenseChe
 	}
 
 	if response == nil {
-		fmt.Printf("Warning REPO: %s Data does not exist\n")
 		return nil, nil
 	}
 
@@ -76,7 +80,7 @@ func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error
 	filename := "./data/" + splitResult[len(splitResult)-1] + ".csv"
 	// better semiphore is needed
 	if fileExists(filename) {
-		fmt.Printf("Warning - %s exists..skipping\n", filename)
+		logrus.Infof("Warning - %s exists..skipping\n", filename)
 		return nil
 	}
 
@@ -119,5 +123,6 @@ func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 		})
 	}
 
+	log.Infof("Repos : %d\n", len(resp))
 	return resp, nil
 }
