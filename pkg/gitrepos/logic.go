@@ -1,10 +1,4 @@
-package license
-
-import (
-	"fmt"
-
-	"github.com/pkg/errors"
-)
+package gitrepos
 
 //Service is a struct to execute methods
 type Service struct {
@@ -22,11 +16,20 @@ type LicenseCheckResult struct {
 // List of licensechecks
 type LicenseCheckResults []LicenseCheckResult
 
-//interface for the core to save
+// interface for the core to save
 type Repository interface {
-	SaveLicenses(LicenseCheckResults) error
-	GetLicenses(owner, repo string) (LicenseCheckResults, error)
+	GetRepos(string) (Repos, error)
 }
+
+// A github repo
+type Repo struct {
+	Org  string
+	Name string
+	Lang string
+}
+
+// type declarations
+type Repos []Repo
 
 // return the repository service
 func NewService(ro Repository) *Service {
@@ -38,23 +41,15 @@ func NewService(ro Repository) *Service {
 }
 
 // generic algorithm for check to get the results and save them
-func (service *Service) Execute(owner, repo string) error {
+func (service *Service) ListRepos(org string) (Repos, error) {
 
-	fmt.Printf("Executing for ORG: %s and REPO: %s\n", owner, repo)
-
-	lcr, err := service.repository.GetLicenses(owner, repo)
+	results, err := service.repository.GetRepos(org)
 
 	if err != nil {
-		return errors.Wrap(err, "license.Service() - Get(owner, repo)")
+
+		return nil, err
+
 	}
 
-	if lcr == nil {
-		return nil
-	}
-
-	if err := service.repository.SaveLicenses(lcr); err != nil {
-		return errors.Wrap(err, "license.Service() - Save(lcr)")
-	}
-
-	return nil
+	return results, nil
 }
