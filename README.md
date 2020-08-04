@@ -1,7 +1,7 @@
 ## Purpose
 
 Dump the same data you can get from
-https://github.com/orgs/WeConnect/insights/dependencies but export the results
+https://github.com/orgs/[ORG]/insights/dependencies but export the results
 to a csv or google sheet
 
 
