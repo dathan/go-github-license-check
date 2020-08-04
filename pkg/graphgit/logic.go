@@ -16,7 +16,7 @@ type Service struct {
 	gClient *graphql.Client
 }
 
-const DEBUG_ON = true
+const DEBUG_ON = false
 
 func NewService() *Service {
 	service := &Service{}
@@ -140,7 +140,7 @@ func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesR
 	}
 	req := graphql.NewRequest(`
 	{
-		repos: search(query: "org:WeConnect archived:false pushed:>=2020-02-03", type: REPOSITORY, first: 100` + afterStr + `) {
+		repos: search(query: "org:` + org + ` archived:false pushed:>=2020-02-03", type: REPOSITORY, first: 100` + afterStr + `) {
 		  repositoryCount
 		  pageInfo { endCursor startCursor hasNextPage }
 		  edges {

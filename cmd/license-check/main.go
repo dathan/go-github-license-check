@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -17,9 +18,17 @@ func main() {
 	var enable bool = true
 	var err error
 
+	// validate inputs
+	org := flag.String("org", "WeConnect", "Provide your github organization to crawl")
+	flag.Parse()
+	if len(*org) == 0 {
+		flag.Usage()
+		os.Exit(-1)
+	}
+
 	var listing *gitrepos.Service = gitrepos.NewService(ro)
 	if enable {
-		orgs, err = listing.ListRepos("WeConnect")
+		orgs, err = listing.ListRepos(*org)
 		if err != nil {
 			fmt.Printf("TEMP ERROR: %s\n", err)
 			os.Exit(-1)
