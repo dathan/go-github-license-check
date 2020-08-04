@@ -1,37 +1,6 @@
 package license
 
-//DependencyGraphResponse is for the specific query performmed, anon struct types are used for the types.
-type DependencyGraphManifestsResponse struct {
-	Repository struct {
-		DependencyGraphManifests struct {
-			Edges []struct {
-				Cursor string `json:"cursor"`
-				Node   struct {
-					Dependencies struct {
-						Nodes []struct {
-							PackageName string `json:"packageName"`
-							Repository  struct {
-								LicenseInfo struct {
-									Name string `json:"name"`
-								} `json:"licenseInfo"`
-							} `json:"repository"`
-						} `json:"nodes"`
-						TotalCount int `json:"totalCount"`
-					} `json:"dependencies"`
-					DependenciesCount int `json:"dependenciesCount"`
-				} `json:"node"`
-			} `json:"edges"`
-			PageInfo struct {
-				EndCursor       string `json:"endCursor"`
-				HasNextPage     bool   `json:"hasNextPage"`
-				HasPreviousPage bool   `json:"hasPreviousPage"`
-				StartCursor     string `json:"startCursor"`
-			} `json:"pageInfo"`
-			TotalCount int `json:"totalCount"`
-		} `json:"dependencyGraphManifests"`
-	} `json:"repository"`
-}
-
+//Service is a struct to execute methods
 type Service struct {
 	repository Repository
 }
@@ -53,6 +22,7 @@ type Repository interface {
 	GetLicenses(owner, repo string) (LicenseCheckResults, error)
 }
 
+// return the repository service
 func NewService(ro Repository) *Service {
 
 	service := Service{}
@@ -61,6 +31,7 @@ func NewService(ro Repository) *Service {
 
 }
 
+// generic algorithm for check to get the results and save them
 func (service *Service) Execute(owner, repo string) error {
 
 	lcr, err := service.repository.GetLicenses(owner, repo)
