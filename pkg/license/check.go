@@ -32,8 +32,9 @@ func NewService(ro Repository) *Service {
 
 	service := Service{}
 	service.repository = ro
-	logrus.SetFormatter(&logrus.JSONFormatter{
-		PrettyPrint: true,
+	logrus.SetFormatter(&logrus.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
 	})
 	logrus.SetReportCaller(true)
 
@@ -44,7 +45,7 @@ func NewService(ro Repository) *Service {
 // generic algorithm for check to get the results and save them
 func (service *Service) Execute(owner, repo string) error {
 
-	logrus.Infof("Executing for ORG: %s and REPO: %s\n", owner, repo)
+	logrus.Infof("Executing for ORG: %s and REPO: %s", owner, repo)
 
 	lcr, err := service.repository.GetLicenses(owner, repo)
 

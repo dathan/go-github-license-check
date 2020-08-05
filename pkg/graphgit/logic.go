@@ -29,11 +29,6 @@ func NewService() *Service {
 		}
 	}
 
-	logrus.SetFormatter(&logrus.JSONFormatter{
-		PrettyPrint: true,
-	})
-	logrus.SetReportCaller(true)
-
 	return service
 }
 
@@ -108,7 +103,7 @@ func (service *Service) GetLicenses(owner, repo, after string) (*DependencyGraph
 }
 
 func skipErrorNextTime(repo string) {
-	logrus.Infof("Skipping this repo due to some error: %s\n", repo)
+	logrus.Infof("Skipping this repo due to some error: %s", repo)
 	fd, _ := os.Create("./data/" + repo + ".csv")
 	defer fd.Close()
 }
@@ -124,12 +119,13 @@ func (service *Service) execute(req *graphql.Request, respData interface{}) erro
 	if err := service.gClient.Run(ctx, req, respData); err != nil {
 
 		// catch timeout errors
-		if strings.Contains(err.Error(), "timedout") != false || strings.Contains(err.Error(), "loading") != false {
-			logrus.Infof("WARNING - recovering from a timeout: %s\n", err)
+		if strings.Contains(err.Error(), "timedout") || strings.Contains(err.Error(), "loading") {
+			logrus.Warningf("recovering from a timeout: %s", err)
 			return service.execute(req, respData)
 		}
 
-		log.Println(errors.Wrap(err, "NewService graphql.Client.Run() failed"))
+		err = errors.Wrap(err, "NewService graphql.Client.Run() failed")
+		logrus.Error(err)
 		return err
 	}
 
@@ -167,7 +163,7 @@ func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesR
 		return nil, err
 	}
 
-	if respData.Repos.PageInfo.HasNextPage == true {
+	if respData.Repos.PageInfo.HasNextPage {
 		data, err := service.GetRepos(org, respData.Repos.PageInfo.EndCursor)
 		if err != nil {
 			return nil, err

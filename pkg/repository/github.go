@@ -8,9 +8,10 @@ import (
 	"github.com/dathan/go-github-license-check/pkg/gitrepos"
 	"github.com/dathan/go-github-license-check/pkg/graphgit"
 	"github.com/dathan/go-github-license-check/pkg/license"
-	"github.com/google/martian/log"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 type GitHubRepository struct {
@@ -20,10 +21,6 @@ type GitHubRepository struct {
 func NewRepository() *GitHubRepository {
 	lic := &GitHubRepository{}
 	lic.gihub = graphgit.NewService()
-	logrus.SetFormatter(&logrus.JSONFormatter{
-		PrettyPrint: true,
-	})
-	logrus.SetReportCaller(true)
 
 	return lic
 }
@@ -33,7 +30,7 @@ func (ghr *GitHubRepository) GetLicenses(owner, repo string) (license.LicenseChe
 	filename := "./data/" + repo + ".csv"
 	// better semiphore is needed
 	if fileExists(filename) {
-		logrus.Infof("Warning Skipping get - %s exists..skipping\n", filename)
+		logrus.Warningf("repository.GetLicenses() Filename: %s exists..skipping", filename)
 		return nil, nil
 	}
 
@@ -63,10 +60,7 @@ func (ghr *GitHubRepository) GetLicenses(owner, repo string) (license.LicenseChe
 
 func fileExists(filename string) bool {
 	_, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	return true
+	return !os.IsNotExist(err)
 }
 
 func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error {
@@ -80,7 +74,7 @@ func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error
 	filename := "./data/" + splitResult[len(splitResult)-1] + ".csv"
 	// better semiphore is needed
 	if fileExists(filename) {
-		logrus.Infof("Warning - %s exists..skipping\n", filename)
+		logrus.Warningf("respository.SaveLicenses(): Filename: %s exists...skipping", filename)
 		return nil
 	}
 
@@ -107,6 +101,8 @@ func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error
 
 func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 
+	log.Infof("Getting recent non-archived repos for the ORG: %s", org)
+
 	res, err := ghr.gihub.GetRepos(org, "")
 	if err != nil {
 		return nil, err
@@ -114,6 +110,7 @@ func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 
 	var resp gitrepos.Repos
 	for _, repo := range res.Repos.Edges {
+		// I could use the input but let's be explicit since we are converting one type to another
 		orgSplit := strings.Split(repo.Node.NameWithOwner, "/")
 
 		resp = append(resp, gitrepos.Repo{
@@ -123,6 +120,6 @@ func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 		})
 	}
 
-	log.Infof("Repos : %d\n", len(resp))
+	log.Infof("Total Number of Repos : %d", len(resp))
 	return resp, nil
 }

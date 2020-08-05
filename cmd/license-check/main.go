@@ -2,12 +2,12 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 
 	"github.com/dathan/go-github-license-check/pkg/gitrepos"
 	"github.com/dathan/go-github-license-check/pkg/license"
 	"github.com/dathan/go-github-license-check/pkg/repository"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
@@ -26,11 +26,20 @@ func main() {
 		os.Exit(-1)
 	}
 
-	var listing *gitrepos.Service = gitrepos.NewService(ro)
+	// hack to set up environment
+	_, err = os.Stat("./data")
+	if os.IsNotExist(err) {
+		err := os.Mkdir("./data", 0755)
+		if err != nil {
+			panic("Hack environment where the csv is unable to be made. Accepting PRs")
+		}
+	}
+
+	listing := gitrepos.NewService(ro)
 	if enable {
 		orgs, err = listing.ListRepos(*org)
 		if err != nil {
-			fmt.Printf("TEMP ERROR: %s\n", err)
+			logrus.Errorf("TEMP ERROR: %s", err)
 			os.Exit(-1)
 		}
 	}
@@ -40,7 +49,7 @@ func main() {
 	for _, org := range orgs {
 		//TODO call a listing service to list all the repos to perform the update
 		if err := saving.Execute(org.Org, org.Name); err != nil {
-			fmt.Printf("TEMP ERROR: %s\n", err)
+			logrus.Printf("TEMP ERROR: %s", err)
 			os.Exit(-1)
 		}
 	}

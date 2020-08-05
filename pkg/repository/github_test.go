@@ -19,7 +19,9 @@ func TestNewRepository(t *testing.T) {
 			if err != nil {
 				t.Fatalf("DEAD: %s\n", err)
 			}
-			rep.SaveLicenses(res)
+			if err := rep.SaveLicenses(res); err != nil {
+				t.Fatalf("Save Failed: %s", err.Error())
+			}
 		})
 	}
 }

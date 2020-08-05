@@ -5,6 +5,16 @@ https://github.com/orgs/[ORG]/insights/dependencies but export the results
 to a csv or google sheet
 
 
+# How to run
+```
+export GITHUB_GRAPHQL_CHECK=<GITHUB SSO enabled token which has permissions to view your org>
+```
+
+```
+make run
+```
+
+
 ## Algorithm
 
 * create authorized https client to the graphql endpoint
