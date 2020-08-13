@@ -11,6 +11,13 @@ export GITHUB_GRAPHQL_CHECK=<GITHUB SSO enabled token which has permissions to v
 ```
 
 ```
+add credentials.json in the directory running the cmd //todo fix this to
+customize. You will need to follow this create app steps located here:
+https://developers.google.com/sheets/api/quickstart/go
+```
+
+
+```
 make run
 ```
 
