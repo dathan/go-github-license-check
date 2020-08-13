@@ -75,15 +75,18 @@ func (service *Service) GetLicenses(owner, repo, after string) (*DependencyGraph
   	}
 	`)
 
+	// this is a beta version graphql call
 	req.Header.Add("Accept", "application/vnd.github.hawkgirl-preview+json")
 
 	// run it and capture the response
 	var respData DependencyGraphManifestsResponse
 	if err := service.execute(req, &respData); err != nil {
-		if strings.Contains(err.Error(), "decoding") {
-			skipErrorNextTime(repo)
-			return nil, nil
-		}
+		/*
+			if strings.Contains(err.Error(), "decoding") {
+				skipErrorNextTime(repo)
+				return nil, nil
+			}
+		*/
 		return nil, err
 	}
 
@@ -110,6 +113,13 @@ func skipErrorNextTime(repo string) {
 
 func (service *Service) execute(req *graphql.Request, respData interface{}) error {
 	token := os.Getenv("GITHUB_GRAPHQL_CHECK")
+
+	// verify requirements
+	if token == "" {
+		logrus.Error("GITHUB_GRAPHQL_CHECK is not set")
+		return errors.New("GITHUB_GRAPHQL_CHECK is not set")
+	}
+
 	req.Header.Add("Authorization", "bearer "+token)
 
 	// define a Context for the request

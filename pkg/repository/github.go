@@ -8,6 +8,7 @@ import (
 	"github.com/dathan/go-github-license-check/pkg/gitrepos"
 	"github.com/dathan/go-github-license-check/pkg/graphgit"
 	"github.com/dathan/go-github-license-check/pkg/license"
+	"github.com/dathan/go-github-license-check/pkg/sheets"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -15,12 +16,14 @@ import (
 )
 
 type GitHubRepository struct {
-	gihub *graphgit.Service
+	gihub  *graphgit.Service
+	sheets *sheets.Service
 }
 
 func NewRepository() *GitHubRepository {
 	lic := &GitHubRepository{}
 	lic.gihub = graphgit.NewService()
+	lic.sheets = sheets.NewService()
 
 	return lic
 }
@@ -68,6 +71,11 @@ func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error
 		spew.Config.Indent = "\t"
 		spew.Dump(res)
 	*/
+
+	if err := ghr.sheets.Save(res); err != nil {
+		return err
+	}
+
 	//TODO put this in its own domain so you can save to sql,csv,google-sheets
 	splitResult := strings.Split(res[0].GitHubRepo, "/")
 	//TODO make this configurable

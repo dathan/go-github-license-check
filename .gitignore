@@ -23,3 +23,5 @@ vendor
 api
 bin
 data
+
+*.json
