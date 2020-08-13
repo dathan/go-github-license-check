@@ -139,6 +139,7 @@ func (s *Service) Save(input license.LicenseCheckResults) error {
 	var newSheet map[string]license.LicenseCheckResults = make(map[string]license.LicenseCheckResults)
 	var which int = 0
 	for _, item := range input {
+
 		if _, ok := newSheet[item.GitHubRepo]; !ok {
 			which++
 			req := sheets.Request{
@@ -148,9 +149,11 @@ func (s *Service) Save(input license.LicenseCheckResults) error {
 					},
 				},
 			}
+
 			rbb := &sheets.BatchUpdateSpreadsheetRequest{
 				Requests: []*sheets.Request{&req},
 			}
+
 			call := s.srv.Spreadsheets.BatchUpdate(s.currentSheet, rbb)
 			_, err := call.Do()
 			if err != nil {

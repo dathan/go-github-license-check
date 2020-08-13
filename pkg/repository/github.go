@@ -1,16 +1,14 @@
 package repository
 
 import (
-	"encoding/csv"
-	"os"
 	"strings"
 
+	"github.com/dathan/go-github-license-check/pkg/csv"
 	"github.com/dathan/go-github-license-check/pkg/gitrepos"
 	"github.com/dathan/go-github-license-check/pkg/graphgit"
 	"github.com/dathan/go-github-license-check/pkg/license"
 	"github.com/dathan/go-github-license-check/pkg/sheets"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
@@ -18,12 +16,15 @@ import (
 type GitHubRepository struct {
 	gihub  *graphgit.Service
 	sheets *sheets.Service
+	csv    *csv.Service
 }
 
 func NewRepository() *GitHubRepository {
+
 	lic := &GitHubRepository{}
 	lic.gihub = graphgit.NewService()
 	lic.sheets = sheets.NewService()
+	lic.csv = csv.NewService()
 
 	return lic
 }
@@ -61,11 +62,6 @@ func (ghr *GitHubRepository) GetLicenses(owner, repo string) (license.LicenseChe
 	return res, nil
 }
 
-func fileExists(filename string) bool {
-	_, err := os.Stat(filename)
-	return !os.IsNotExist(err)
-}
-
 func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error {
 	/*
 		spew.Config.Indent = "\t"
@@ -76,31 +72,8 @@ func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error
 		return err
 	}
 
-	//TODO put this in its own domain so you can save to sql,csv,google-sheets
-	splitResult := strings.Split(res[0].GitHubRepo, "/")
-	//TODO make this configurable
-	filename := "./data/" + splitResult[len(splitResult)-1] + ".csv"
-	// better semiphore is needed
-	if fileExists(filename) {
-		logrus.Warningf("respository.SaveLicenses(): Filename: %s exists...skipping", filename)
-		return nil
-	}
-
-	file, err := os.Create(filename)
-	if err != nil {
-		return errors.Wrap(err, "creating a file - improve this")
-	}
-
-	defer file.Close()
-
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-
-	for _, value := range res {
-		err := writer.Write([]string{value.GitHubRepo, value.Dependency, value.DependencyLicense, value.Lang})
-		if err != nil {
-			return err
-		}
+	if err := ghr.csv.Save(res); err != nil {
+		return err
 	}
 
 	return nil
