@@ -33,7 +33,7 @@ func (ghr *GitHubRepository) GetLicenses(owner, repo string) (license.LicenseChe
 
 	filename := "./data/" + repo + ".csv"
 	// better semiphore is needed
-	if fileExists(filename) {
+	if ghr.csv.FileExists(filename) {
 		logrus.Warningf("repository.GetLicenses() Filename: %s exists..skipping", filename)
 		return nil, nil
 	}
