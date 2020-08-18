@@ -1,7 +1,7 @@
 # Go parameters
 BINARY_NAME=license-check
 BINARY_UNIX=$(BINARY_NAME)_unix
-REPO=dathan/go-github-license-check
+REPO=docker.pkg.github.com/dathan/go-github-license-check/go-github-license-check
 
 .PHONY: all
 all: lint test build
@@ -40,7 +40,6 @@ build-linux:
 .PHONY: docker-build
 docker-build:
 				docker build  \
-					--build-arg GITHUB_SSH_PRIV_KEY="`cat ~/.ssh/id_rsa`" \
 					-t $(or ${dockerImage},$(BINARY_NAME)-release) .
 .PHONY: docker-tag
 docker-tag:
