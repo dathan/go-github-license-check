@@ -53,7 +53,7 @@ jobs:
       - name: Log into registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" |docker login --username ${{github.actor}} --password-stdin
 
-      - name: Push image
+      - name: Push image MANUALLY to docker.pkg.github.com
         run: |
           IMAGE_ID=${{ github.repository }}/$IMAGE_NAME
           
