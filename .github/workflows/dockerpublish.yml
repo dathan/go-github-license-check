@@ -47,12 +47,7 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
-      - uses: shimataro/ssh-key-action@v2.0.1
-        with:
-          key: ${{ secrets.SSH_PRIV_KEY }}
-          known_hosts: ${{ secrets.KNOWN_HOSTS }}
-          name: id_rsa # optional
-
+      
       - uses: actions/checkout@v2
 
       - name: Log into registry
