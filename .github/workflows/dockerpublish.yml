@@ -1,4 +1,4 @@
-name: Docker
+name: Publish Docker container
 
 on:
   push:
@@ -13,30 +13,10 @@ on:
   # Run tests for any PRs.
   pull_request:
 
-env:
-  # TODO: Change variable to your image's name.
-  IMAGE_NAME: license-check
-
 jobs:
-  # Run tests.
-  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Verify Build Works
-        run: |
-          make docker-build
-
   # Push image to GitHub Packages.
   # See also https://docs.docker.com/docker-hub/builds/
   push:
-    # Ensure test job passes before pushing image.
-    needs: test
-
-
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
 
@@ -45,8 +25,8 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Log into registry
+        #note by default GITHUB_TOKEN is already set in your repo to push to the registry by default for github
         run: echo "${{ secrets.GITHUB_TOKEN }}" |docker login docker.pkg.github.com --username ${{github.actor}} --password-stdin
 
-      - name: Push image MANUALLY to docker.pkg.github.com
-        run: |
-          make docker-push
+      - name: Build, Tag, Push
+        run: make docker-push
