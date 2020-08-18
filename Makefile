@@ -1,7 +1,7 @@
 # Go parameters
 BINARY_NAME=license-check
 BINARY_UNIX=$(BINARY_NAME)_unix
-REPO=docker.pkg.github.com/dathan/go-github-license-check
+REPO=dathan/go-github-license-check
 
 .PHONY: all
 all: lint test build
