@@ -36,5 +36,6 @@ make run
 
 ## DOCKER
 
-Github builds and pushes the docker images. A cache is set in the push job to
-test if builds between pushes are cached.
+Github builds and pushes the docker images to docker.pkg.github.com.
+Splitting testing bettween builds can be sped up with a cache in the same github
+action run, not between builds.`
