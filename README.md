@@ -33,3 +33,8 @@ make run
 ## OUTPUT
  Service , github repo, lang, lib, license
 
+
+## DOCKER
+
+Github builds and pushes the docker images. A cache is set in the push job to
+test if builds between pushes are cached.
