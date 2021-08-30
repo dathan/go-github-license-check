@@ -2,6 +2,8 @@ package graphgit
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 
 	"log"
 	"os"
@@ -134,8 +136,8 @@ func (service *Service) execute(req *graphql.Request, respData interface{}) erro
 			return service.execute(req, respData)
 		}
 
-		err = errors.Wrap(err, "NewService graphql.Client.Run() failed")
-		logrus.Error(err)
+		err = errors.Wrap(err, "service.execute failed:")
+		logrus.Warn(err)
 		return err
 	}
 
@@ -144,13 +146,16 @@ func (service *Service) execute(req *graphql.Request, respData interface{}) erro
 }
 
 func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesResponse, error) {
+	// need to change the query from after to created since we need to walk the index
+	// https://github.community/t/graphql-github-api-how-to-get-more-than-1000-pull-requests/13838/11
 	afterStr := ""
 	if len(after) > 0 {
-		afterStr = ", after:\"" + after + "\""
+		afterStr = fmt.Sprintf("created:>%s", after)
 	}
-	req := graphql.NewRequest(`
+
+	requestJSON := fmt.Sprintf(`
 	{
-		repos: search(query: "org:` + org + ` archived:false pushed:>=2020-02-03", type: REPOSITORY, first: 100` + afterStr + `) {
+		repos: search(query: "org:%s archived:false sort:updated-asc %s", type: REPOSITORY, first: 100) {
 		  repositoryCount
 		  pageInfo { endCursor startCursor hasNextPage }
 		  edges {
@@ -158,6 +163,7 @@ func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesR
 			  ... on Repository {
 				name
 				nameWithOwner
+				createdAt
 				primaryLanguage {
 				  name
 				} 
@@ -166,16 +172,27 @@ func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesR
 		}
 	  }
 	  }
-	`)
+	`, org, afterStr)
+	logrus.Infof("About to make a request: %s", requestJSON)
+	req := graphql.NewRequest(requestJSON)
 
 	var respData GithubRepositoriesResponse
 	if err := service.execute(req, &respData); err != nil {
+
+		logrus.Warnf("Received an error: %s", err)
 		return nil, err
 	}
 
+	startPos, _ := base64.StdEncoding.DecodeString(respData.Repos.PageInfo.StartCursor)
+	endPos, _ := base64.StdEncoding.DecodeString(respData.Repos.PageInfo.EndCursor)
+
+	logrus.Infof("Repos: %d Paginfo Struct (%+v) Edges %d out of %d for start: %s and end: %s", respData.Repos.RepositoryCount, respData.Repos.PageInfo, respData.Repos.RepositoryCount, len(respData.Repos.Edges), string(startPos), string(endPos))
 	if respData.Repos.PageInfo.HasNextPage {
-		data, err := service.GetRepos(org, respData.Repos.PageInfo.EndCursor)
+		pos := len(respData.Repos.Edges) - 1
+		pos = 0
+		data, err := service.GetRepos(org, respData.Repos.Edges[pos].Node.CreatedAt.Format("2006-01-02"))
 		if err != nil {
+			logrus.Warnf("ERROR: %s", err)
 			return nil, err
 		}
 

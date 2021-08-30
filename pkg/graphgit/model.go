@@ -1,5 +1,7 @@
 package graphgit
 
+import "time"
+
 //DependencyGraphResponse is for the specific query performmed, anon struct types are used for the types.
 type DependencyGraphManifestsResponse struct {
 	Repository struct {
@@ -45,8 +47,9 @@ type GithubRepositoriesResponse struct {
 		} `json:"pageInfo"`
 		Edges []struct {
 			Node struct {
-				Name            string `json:"name"`
-				NameWithOwner   string `json:"nameWithOwner"`
+				Name            string    `json:"name"`
+				NameWithOwner   string    `json:"nameWithOwner"`
+				CreatedAt       time.Time `json:"createdAt"`
 				PrimaryLanguage struct {
 					Name string `json:"name"`
 				} `json:"primaryLanguage"`

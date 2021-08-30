@@ -37,11 +37,9 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 		"authorization code: \n%v\n", authURL)
 
 	var authCode string = "4/2wEbk1htf3gsMzYupfp0U1wnDrM_QDoKgTAhJN6Soeb8hyXM38Ds3M8"
-	/*
-		if _, err := fmt.Scan(&authCode); err != nil {
-			log.Fatalf("Unable to read authorization code: %v", err)
-		}
-	*/
+	if _, err := fmt.Scan(&authCode); err != nil {
+		log.Fatalf("Unable to read authorization code: %v", err)
+	}
 	tok, err := config.Exchange(context.TODO(), authCode)
 	if err != nil {
 		log.Fatalf("Unable to retrieve token from web: %v", err)

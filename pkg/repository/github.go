@@ -67,10 +67,11 @@ func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error
 		spew.Config.Indent = "\t"
 		spew.Dump(res)
 	*/
-
-	if err := ghr.sheets.Save(res); err != nil {
-		return err
-	}
+	/*
+		if err := ghr.sheets.Save(res); err != nil {
+			return err
+		}
+	*/
 
 	if err := ghr.csv.Save(res); err != nil {
 		return err
@@ -90,17 +91,22 @@ func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 	}
 
 	var resp gitrepos.Repos
+	var dedupe map[string]string = make(map[string]string)
 	for _, repo := range res.Repos.Edges {
-		// I could use the input but let's be explicit since we are converting one type to another
-		orgSplit := strings.Split(repo.Node.NameWithOwner, "/")
 
-		resp = append(resp, gitrepos.Repo{
-			Org:  orgSplit[0],
-			Name: repo.Node.Name,
-			Lang: repo.Node.PrimaryLanguage.Name,
-		})
+		if _, ok := dedupe[repo.Node.Name]; !ok {
+			// I could use the input but let's be explicit since we are converting one type to another
+			orgSplit := strings.Split(repo.Node.NameWithOwner, "/")
+
+			resp = append(resp, gitrepos.Repo{
+				Org:  orgSplit[0],
+				Name: repo.Node.Name,
+				Lang: repo.Node.PrimaryLanguage.Name,
+			})
+			dedupe[repo.Node.Name] = repo.Node.Name
+		}
 	}
 
-	log.Infof("Total Number of Repos : %d", len(resp))
+	log.Infof("Total Number of Repos : %d -->", len(resp))
 	return resp, nil
 }
