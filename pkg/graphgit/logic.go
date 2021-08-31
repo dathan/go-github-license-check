@@ -41,9 +41,9 @@ func (service *Service) GetLicenses(owner, repo, after string) (*DependencyGraph
 	if len(after) > 0 {
 		afterStr = ", after:\"" + after + "\""
 	}
-	req := graphql.NewRequest(`
-	query {
-		repository(name: "` + repo + `", owner: "` + owner + `"` + afterStr + `) {
+
+	query := fmt.Sprintf(`query {
+		repository(name:"%s", owner:"%s" %s) {
 		  dependencyGraphManifests {
 				edges {
 				  cursor
@@ -74,8 +74,10 @@ func (service *Service) GetLicenses(owner, repo, after string) (*DependencyGraph
 				totalCount
 		  } 
 		}
-  	}
-	`)
+  	}`, repo, owner, afterStr)
+
+	logrus.Warn(query)
+	req := graphql.NewRequest(query)
 
 	// this is a beta version graphql call
 	req.Header.Add("Accept", "application/vnd.github.hawkgirl-preview+json")
@@ -165,7 +167,7 @@ func (service *Service) GHRequestJSON(org, after, since string) string {
 
 	requestJSON := fmt.Sprintf(`
 	{
-		repos: search(query: "org:%s archived:false %s", %s type: REPOSITORY, first: 100) {
+		repos: search(query: "org:%s archived:false %s sort:updated-asc", %s type: REPOSITORY, first: 100) {
 		  repositoryCount
 		  pageInfo { endCursor startCursor hasNextPage }
 		  edges {

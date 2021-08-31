@@ -114,7 +114,25 @@ func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 	}
 
 	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
+	res2, err = ghr.gihub.GetReposSince(org, "", "2017-01-01")
+	if err != nil {
+		return nil, err
+	}
+
+	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
 	res2, err = ghr.gihub.GetReposSince(org, "", "2016-01-01")
+	if err != nil {
+		return nil, err
+	}
+
+	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
+	res2, err = ghr.gihub.GetReposSince(org, "", "2015-01-01")
+	if err != nil {
+		return nil, err
+	}
+
+	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
+	res2, err = ghr.gihub.GetReposSince(org, "", "2014-01-01")
 	if err != nil {
 		return nil, err
 	}
