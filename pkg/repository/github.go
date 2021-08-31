@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"strings"
+
 	"github.com/dathan/go-github-license-check/pkg/csv"
 	"github.com/dathan/go-github-license-check/pkg/gitrepos"
 	"github.com/dathan/go-github-license-check/pkg/graphgit"
@@ -111,9 +113,22 @@ func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 		return nil, err
 	}
 
+	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
+	res2, err = ghr.gihub.GetReposSince(org, "", "2016-01-01")
+	if err != nil {
+		return nil, err
+	}
+
+	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
+
+	var resp gitrepos.Repos
 	var dedupe map[string]string = make(map[string]string)
 	for _, repo := range res.Repos.Edges {
+
 		if _, ok := dedupe[repo.Node.Name]; !ok {
+			// I could use the input but let's be explicit since we are converting one type to another
+			orgSplit := strings.Split(repo.Node.NameWithOwner, "/")
+
 			resp = append(resp, gitrepos.Repo{
 				Org:  orgSplit[0],
 				Name: repo.Node.Name,

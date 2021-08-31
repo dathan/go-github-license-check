@@ -148,22 +148,24 @@ func (service *Service) execute(req *graphql.Request, respData interface{}) erro
 
 }
 
+// GHRequestJSON a helper function to build a graphql search query in string format
+// The same query can be run at https://docs.github.com/en/graphql/overview/explorer
 func (service *Service) GHRequestJSON(org, after, since string) string {
 	// need to change the query from after to created since we need to walk the index
 	// https://github.community/t/graphql-github-api-how-to-get-more-than-1000-pull-requests/13838/11
 	afterStr := ""
 	if len(after) > 0 {
 		// going to use a cursort for the base query, then call another method for filling in the gaps
-		afterStr = fmt.Sprintf("after:%s", after)
+		afterStr = fmt.Sprintf("after:\"%s\",", after)
 	}
-
+	created := ""
 	if len(since) > 0 {
-		afterStr += fmt.Sprintf(" created:>%s", since)
+		created = fmt.Sprintf(" created:>%s", since)
 	}
 
 	requestJSON := fmt.Sprintf(`
 	{
-		repos: search(query: "org:%s archived:false %s", type: REPOSITORY, first: 100) {
+		repos: search(query: "org:%s archived:false %s", %s type: REPOSITORY, first: 100) {
 		  repositoryCount
 		  pageInfo { endCursor startCursor hasNextPage }
 		  edges {
@@ -181,7 +183,7 @@ func (service *Service) GHRequestJSON(org, after, since string) string {
 		}
 	  }
 	  }
-	`, org, afterStr)
+	`, org, created, afterStr)
 	return requestJSON
 }
 
@@ -226,9 +228,6 @@ func (service *Service) GetReposSince(org string, after string, since string) (*
 	}
 
 	if respData.Repos.PageInfo.HasNextPage {
-		//pos := len(respData.Repos.Edges) - 1
-		//pos = 0
-		//data, err := service.GetRepos(org, respData.Repos.Edges[pos].Node.CreatedAt.Format("2006-01-02"))
 		data, err := service.GetReposSince(org, respData.Repos.PageInfo.EndCursor, since)
 		if err != nil {
 			logrus.Warnf("ERROR: %s", err)
