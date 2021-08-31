@@ -127,6 +127,7 @@ func (service *Service) execute(req *graphql.Request, respData interface{}) erro
 	// define a Context for the request
 	ctx := context.Background()
 
+	//service.gClient.Log = func(s string) { logrus.Warn(s) }
 	// run it and capture the response
 	if err := service.gClient.Run(ctx, req, respData); err != nil {
 
@@ -136,8 +137,10 @@ func (service *Service) execute(req *graphql.Request, respData interface{}) erro
 			return service.execute(req, respData)
 		}
 
-		err = errors.Wrap(err, "service.execute failed:")
 		logrus.Warn(err)
+		if strings.Contains(err.Error(), "invalid character") != false {
+			return nil
+		}
 		return err
 	}
 
@@ -145,17 +148,22 @@ func (service *Service) execute(req *graphql.Request, respData interface{}) erro
 
 }
 
-func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesResponse, error) {
+func (service *Service) GHRequestJSON(org, after, since string) string {
 	// need to change the query from after to created since we need to walk the index
 	// https://github.community/t/graphql-github-api-how-to-get-more-than-1000-pull-requests/13838/11
 	afterStr := ""
 	if len(after) > 0 {
-		afterStr = fmt.Sprintf("created:>%s", after)
+		// going to use a cursort for the base query, then call another method for filling in the gaps
+		afterStr = fmt.Sprintf("after:%s", after)
+	}
+
+	if len(since) > 0 {
+		afterStr += fmt.Sprintf(" created:>%s", since)
 	}
 
 	requestJSON := fmt.Sprintf(`
 	{
-		repos: search(query: "org:%s archived:false sort:updated-asc %s", type: REPOSITORY, first: 100) {
+		repos: search(query: "org:%s archived:false %s", type: REPOSITORY, first: 100) {
 		  repositoryCount
 		  pageInfo { endCursor startCursor hasNextPage }
 		  edges {
@@ -164,6 +172,7 @@ func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesR
 				name
 				nameWithOwner
 				createdAt
+				updatedAt
 				primaryLanguage {
 				  name
 				} 
@@ -173,7 +182,68 @@ func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesR
 	  }
 	  }
 	`, org, afterStr)
+	return requestJSON
+}
+
+func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesResponse, error) {
+
+	requestJSON := service.GHRequestJSON(org, after, "")
 	logrus.Infof("About to make a request: %s", requestJSON)
+
+	respData, err := service.getGHResponse(requestJSON)
+	if err != nil {
+		logrus.Warnf("Error for GHResponse: %s", err)
+		return nil, err
+	}
+
+	if respData.Repos.PageInfo.HasNextPage {
+		//pos := len(respData.Repos.Edges) - 1
+		//pos = 0
+		//data, err := service.GetRepos(org, respData.Repos.Edges[pos].Node.CreatedAt.Format("2006-01-02"))
+		data, err := service.GetRepos(org, respData.Repos.PageInfo.EndCursor)
+		if err != nil {
+			logrus.Warnf("ERROR: %s", err)
+			return nil, err
+		}
+
+		respData.Repos.Edges = append(respData.Repos.Edges, data.Repos.Edges...)
+
+	}
+
+	return respData, nil
+
+}
+
+func (service *Service) GetReposSince(org string, after string, since string) (*GithubRepositoriesResponse, error) {
+
+	requestJSON := service.GHRequestJSON(org, after, since)
+	logrus.Infof("About to make a request: %s", requestJSON)
+
+	respData, err := service.getGHResponse(requestJSON)
+	if err != nil {
+		logrus.Warnf("Error for GHResponse: %s", err)
+		return nil, err
+	}
+
+	if respData.Repos.PageInfo.HasNextPage {
+		//pos := len(respData.Repos.Edges) - 1
+		//pos = 0
+		//data, err := service.GetRepos(org, respData.Repos.Edges[pos].Node.CreatedAt.Format("2006-01-02"))
+		data, err := service.GetReposSince(org, respData.Repos.PageInfo.EndCursor, since)
+		if err != nil {
+			logrus.Warnf("ERROR: %s", err)
+			return nil, err
+		}
+
+		respData.Repos.Edges = append(respData.Repos.Edges, data.Repos.Edges...)
+
+	}
+
+	return respData, nil
+
+}
+
+func (service *Service) getGHResponse(requestJSON string) (*GithubRepositoriesResponse, error) {
 	req := graphql.NewRequest(requestJSON)
 
 	var respData GithubRepositoriesResponse
@@ -187,18 +257,5 @@ func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesR
 	endPos, _ := base64.StdEncoding.DecodeString(respData.Repos.PageInfo.EndCursor)
 
 	logrus.Infof("Repos: %d Paginfo Struct (%+v) Edges %d out of %d for start: %s and end: %s", respData.Repos.RepositoryCount, respData.Repos.PageInfo, respData.Repos.RepositoryCount, len(respData.Repos.Edges), string(startPos), string(endPos))
-	if respData.Repos.PageInfo.HasNextPage {
-		pos := len(respData.Repos.Edges) - 1
-		pos = 0
-		data, err := service.GetRepos(org, respData.Repos.Edges[pos].Node.CreatedAt.Format("2006-01-02"))
-		if err != nil {
-			logrus.Warnf("ERROR: %s", err)
-			return nil, err
-		}
-
-		respData.Repos.Edges = append(respData.Repos.Edges, data.Repos.Edges...)
-
-	}
 	return &respData, nil
-
 }

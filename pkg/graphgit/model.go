@@ -50,6 +50,7 @@ type GithubRepositoriesResponse struct {
 				Name            string    `json:"name"`
 				NameWithOwner   string    `json:"nameWithOwner"`
 				CreatedAt       time.Time `json:"createdAt"`
+				UpdatedAt       time.Time `json:"updatedAt"`
 				PrimaryLanguage struct {
 					Name string `json:"name"`
 				} `json:"primaryLanguage"`
