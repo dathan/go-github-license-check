@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	"log"
 	"os"
@@ -136,6 +137,7 @@ func (service *Service) execute(req *graphql.Request, respData interface{}) erro
 		// catch timeout errors
 		if strings.Contains(err.Error(), "timedout") || strings.Contains(err.Error(), "loading") {
 			logrus.Warningf("recovering from a timeout: %s", err)
+			time.Sleep(3 * time.Minute)
 			return service.execute(req, respData)
 		}
 
