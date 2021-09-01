@@ -11,9 +11,8 @@ export GITHUB_GRAPHQL_CHECK=<GITHUB SSO enabled token which has permissions to v
 ```
 
 ```
-add credentials.json in the directory running the cmd //todo fix this to
-customize. You will need to follow this create app steps located here:
-https://developers.google.com/sheets/api/quickstart/go
+* Setup a googleapp following these directions https://developers.google.com/sheets/api/quickstart/go
+* Make sure the credentials.json file runs in the same directory as the binary
 ```
 
 ```
@@ -40,6 +39,5 @@ action run, not between builds.`
 
 ## Known Problems
 
-[Github limits any search to 1000](https://github.community/t/graphql-github-api-how-to-get-more-than-1000-pull-requests/13838/11)
-[Search limitation](https://docs.github.com/en/graphql/reference/queries#searchresultitemconnection)
-
+- [Github limits any search to 1000](https://github.community/t/graphql-github-api-how-to-get-more-than-1000-pull-requests/13838/11)
+- [Search limitation](https://docs.github.com/en/graphql/reference/queries#searchresultitemconnection)

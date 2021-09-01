@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/dathan/go-github-license-check/pkg/csv"
@@ -81,6 +82,7 @@ func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error
 
 }
 
+// GetRepos return the Repos struct the dependant GetRepos in github has an issue with getting the foll data
 func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 
 	log.Infof("Getting recent non-archived repos for the ORG: %s", org)
@@ -90,54 +92,16 @@ func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 		return nil, err
 	}
 
-	res2, err := ghr.gihub.GetReposSince(org, "", "2020-01-01")
-	if err != nil {
-		return nil, err
-	}
+	//TODO: Remove hack to fill in missing repos
+	for i := 2013; i <= 2021; i++ {
+		res2, err := ghr.gihub.GetReposSince(org, "", fmt.Sprintf("%i-01-01", i))
 
-	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
-	res2, err = ghr.gihub.GetReposSince(org, "", "2019-01-01")
-	if err != nil {
-		return nil, err
-	}
+		if err != nil {
+			return nil, err
+		}
 
-	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
-	res2, err = ghr.gihub.GetReposSince(org, "", "2018-01-01")
-	if err != nil {
-		return nil, err
+		res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
 	}
-
-	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
-	res2, err = ghr.gihub.GetReposSince(org, "", "2017-01-01")
-	if err != nil {
-		return nil, err
-	}
-
-	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
-	res2, err = ghr.gihub.GetReposSince(org, "", "2017-01-01")
-	if err != nil {
-		return nil, err
-	}
-
-	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
-	res2, err = ghr.gihub.GetReposSince(org, "", "2016-01-01")
-	if err != nil {
-		return nil, err
-	}
-
-	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
-	res2, err = ghr.gihub.GetReposSince(org, "", "2015-01-01")
-	if err != nil {
-		return nil, err
-	}
-
-	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
-	res2, err = ghr.gihub.GetReposSince(org, "", "2014-01-01")
-	if err != nil {
-		return nil, err
-	}
-
-	res.Repos.Edges = append(res.Repos.Edges, res2.Repos.Edges...)
 
 	var resp gitrepos.Repos
 	var dedupe map[string]string = make(map[string]string)
