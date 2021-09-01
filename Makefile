@@ -16,7 +16,7 @@ build:
 
 .PHONY: test
 test:
-				go test -p 6 -covermode=count -coverprofile=test/coverage.out test/*.go
+				go test -p 6 -v -covermode=count -coverprofile=test/coverage.out ./...
 
 .PHONY: clean
 clean:
