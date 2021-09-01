@@ -2,6 +2,13 @@ package graphgit
 
 import "time"
 
+// ReposArg gets rid of a argument list and allows a refactor
+type ReposArg struct {
+	Org   string
+	After string
+	Since time.Time
+}
+
 //DependencyGraphResponse is for the specific query performmed, anon struct types are used for the types.
 type DependencyGraphManifestsResponse struct {
 	Repository struct {

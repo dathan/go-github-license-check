@@ -22,6 +22,7 @@ type Service struct {
 
 const DEBUG_ON = false
 
+// Return the Service
 func NewService() *Service {
 	service := &Service{}
 
@@ -35,7 +36,7 @@ func NewService() *Service {
 	return service
 }
 
-// return the licenses
+// GetLicenses return the licenses
 func (service *Service) GetLicenses(owner, repo, after string) (*DependencyGraphManifestsResponse, error) {
 
 	afterStr := ""
@@ -191,9 +192,10 @@ func (service *Service) GHRequestJSON(org, after, since string) string {
 	return requestJSON
 }
 
-func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesResponse, error) {
+// GetRepos make a http request to the graphql endpoint returning Repositories
+func (service *Service) GetRepos(in ReposArg) (*GithubRepositoriesResponse, error) {
 
-	requestJSON := service.GHRequestJSON(org, after, "")
+	requestJSON := service.GHRequestJSON(in.Org, in.After, in.Since.Format("2006-01-01"))
 	logrus.Infof("About to make a request: %s", requestJSON)
 
 	respData, err := service.getGHResponse(requestJSON)
@@ -203,36 +205,8 @@ func (service *Service) GetRepos(org string, after string) (*GithubRepositoriesR
 	}
 
 	if respData.Repos.PageInfo.HasNextPage {
-		//pos := len(respData.Repos.Edges) - 1
-		//pos = 0
-		//data, err := service.GetRepos(org, respData.Repos.Edges[pos].Node.CreatedAt.Format("2006-01-02"))
-		data, err := service.GetRepos(org, respData.Repos.PageInfo.EndCursor)
-		if err != nil {
-			logrus.Warnf("ERROR: %s", err)
-			return nil, err
-		}
-
-		respData.Repos.Edges = append(respData.Repos.Edges, data.Repos.Edges...)
-
-	}
-
-	return respData, nil
-
-}
-
-func (service *Service) GetReposSince(org string, after string, since string) (*GithubRepositoriesResponse, error) {
-
-	requestJSON := service.GHRequestJSON(org, after, since)
-	logrus.Infof("About to make a request: %s", requestJSON)
-
-	respData, err := service.getGHResponse(requestJSON)
-	if err != nil {
-		logrus.Warnf("Error for GHResponse: %s", err)
-		return nil, err
-	}
-
-	if respData.Repos.PageInfo.HasNextPage {
-		data, err := service.GetReposSince(org, respData.Repos.PageInfo.EndCursor, since)
+		in.After = respData.Repos.PageInfo.EndCursor
+		data, err := service.GetRepos(in)
 		if err != nil {
 			logrus.Warnf("ERROR: %s", err)
 			return nil, err

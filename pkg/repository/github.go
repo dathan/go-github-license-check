@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/dathan/go-github-license-check/pkg/csv"
 	"github.com/dathan/go-github-license-check/pkg/gitrepos"
@@ -14,12 +15,14 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// GitHubRepository is a wrapper around various services to abstract the list and save to repository from the caller
 type GitHubRepository struct {
 	gihub  *graphgit.Service
 	sheets *sheets.Service
 	csv    *csv.Service
 }
 
+// NewRepository returns the service wrapper
 func NewRepository() *GitHubRepository {
 
 	lic := &GitHubRepository{}
@@ -30,6 +33,7 @@ func NewRepository() *GitHubRepository {
 	return lic
 }
 
+// GetLicenses returns the graphql license result or an error
 func (ghr *GitHubRepository) GetLicenses(owner, repo string) (license.LicenseCheckResults, error) {
 
 	filename := "./data/" + repo + ".csv"
@@ -63,15 +67,17 @@ func (ghr *GitHubRepository) GetLicenses(owner, repo string) (license.LicenseChe
 	return res, nil
 }
 
+// SaveLicenses abstracts licenses
 func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error {
 	/*
 		spew.Config.Indent = "\t"
 		spew.Dump(res)
 	*/
-	/*
-		if err := ghr.sheets.Save(res); err != nil {
-			return err
-		}
+
+	/* uncomment if you want to save to a spreadsheet
+	if err := ghr.sheets.Save(res); err != nil {
+		return err
+	}
 	*/
 
 	if err := ghr.csv.Save(res); err != nil {
@@ -86,15 +92,22 @@ func (ghr *GitHubRepository) SaveLicenses(res license.LicenseCheckResults) error
 func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 
 	log.Infof("Getting recent non-archived repos for the ORG: %s", org)
-
-	res, err := ghr.gihub.GetRepos(org, "")
+	repoArg := graphgit.ReposArg{
+		Org:   org,
+		After: "",
+	}
+	res, err := ghr.gihub.GetRepos(repoArg)
 	if err != nil {
 		return nil, err
 	}
 
 	//TODO: Remove hack to fill in missing repos
 	for i := 2013; i <= 2021; i++ {
-		res2, err := ghr.gihub.GetReposSince(org, "", fmt.Sprintf("%i-01-01", i))
+		if repoArg.Since, err = time.Parse("2006-01-01", fmt.Sprintf("%i-01-01", i)); err != nil {
+			return nil, err
+		}
+
+		res2, err := ghr.gihub.GetRepos(repoArg)
 
 		if err != nil {
 			return nil, err
