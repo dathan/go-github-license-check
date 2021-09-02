@@ -19,7 +19,7 @@ func main() {
 	var err error
 
 	// validate inputs
-	org := flag.String("org", "<your org name>", "Provide your github organization to crawl")
+	org := flag.String("org", "WeConnect", "Provide your github organization to crawl")
 	flag.Parse()
 	if len(*org) == 0 {
 		flag.Usage()

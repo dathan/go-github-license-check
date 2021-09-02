@@ -103,7 +103,7 @@ func (ghr *GitHubRepository) GetRepos(org string) (gitrepos.Repos, error) {
 
 	//TODO: Remove hack to fill in missing repos
 	for i := 2013; i <= 2021; i++ {
-		if repoArg.Since, err = time.Parse("2006-01-01", fmt.Sprintf("20%d-01-01", i)); err != nil {
+		if repoArg.Since, err = time.Parse("2006-01-01", fmt.Sprintf("%d-01-01", i)); err != nil {
 			return nil, err
 		}
 

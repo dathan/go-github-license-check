@@ -138,7 +138,7 @@ func (service *Service) execute(req *graphql.Request, respData interface{}) erro
 		// catch timeout errors
 		if strings.Contains(err.Error(), "timedout") || strings.Contains(err.Error(), "loading") {
 			logrus.Warningf("recovering from a timeout: %s", err)
-			time.Sleep(3 * time.Minute)
+			time.Sleep(1 * time.Second)
 			return service.execute(req, respData)
 		}
 
